@@ -1,0 +1,242 @@
+import * as Utils from "./utils.js";
+import * as Brave from "./modules/brave.js";
+import * as BBI from "./modules/braveBATInfo.js";
+import * as Uphold from "./exchange-modules/uphold.js";
+import * as Gemini from "./exchange-modules/gemini.js";
+import * as Coinbase from "./exchange-modules/coinbase.js";
+
+// https://docs.aws.amazon.com/lambda/latest/dg/nodejs-handler.html
+export const handler = async () => {
+  /**
+   * Get existing data, if any
+   */
+  let source: Utils.TransparencyFile = {} as Utils.TransparencyFile;
+  try {
+    source = await Utils.getFile("https://brave.com/transparency-data.json");
+    /**
+     * If verbose logging is enabled, log how long it has been since
+     * the source file was last updated.
+     */
+    if (process.env.DEBUG === "true") {
+      const hoursAgo = (
+        (Date.now() - source.updated) /
+        (1000 * 60 * 60)
+      ).toFixed(1);
+      console.log(`Last updated ${hoursAgo} hours ago`);
+    }
+  } catch (err: any) {
+    Utils.debugLOG(err);
+  }
+
+  /**
+   * Update 'metrics' property
+   */
+  console.group("Metrics (bravebat.info)");
+
+  await BBI.getCreatorGrowth()
+    .then((results) => {
+      const entries = Object.entries(results);
+      const [, latestStats] = entries[entries.length - 1];
+      // Transfer all new data to the source object
+      for (const [month, stats] of entries) {
+        source.metrics.categoryGrowth[month] = Utils.labelize(stats);
+        source.metrics.growth[month] = Object.values(stats).reduce(
+          (a, b) => a + b
+        );
+      }
+      // Apply up-to-date category figures to the source object
+      for (const channelType in latestStats) {
+        const label: string = Utils.channelLabels[channelType];
+        const stats: number = latestStats[channelType];
+        source.metrics.categories[label] = stats;
+      }
+    })
+    .catch((err: Error) => {
+      console.log(err);
+    });
+
+  /**
+   * Update 'users' property
+   */
+  await BBI.getUsers()
+    .then(({ mau, dau }) => {
+      const mauLabels = mau.labels;
+      const mauValues = Object.values(mau.data)[0];
+      const dauValues = Object.values(dau.data)[0];
+      source.users = mauLabels.reduce((acc, label, i) => {
+        acc[label] = {
+          /**
+           * Raw values are decimal numbers, so we need to multiply.
+           */
+          mau: mauValues[i] * 1_000_000,
+          dau: dauValues[i] * 1_000_000,
+        };
+        return acc;
+      }, {} as Utils.TransparencyFile["users"]);
+    })
+    .catch((err: Error) => {
+      console.log(err);
+    });
+
+  console.groupEnd();
+
+  /**
+   * Update 'transactions' property.
+   *
+   * To avoid having to completely rebuild the entire transaction
+   * array with each run, we'll start by finding the most recent txns
+   * for Gemini and Coinbase. The timestamps for these transactions can
+   * then be provided to the respective `getOrders` methods. This will
+   * allow us to only retrieve the transactions that have occurred since
+   * the last run, if any. Uphold requires a different approach, as it
+   * uses a manually-updated list of transaction IDs. As such, if we have
+   * fewer Uphold transactions than we do transaction IDs, we'll request
+   * the delta and append it to the existing list.
+   */
+  try {
+    const initialTxns = Object.keys(source.transactions);
+    console.group(`Updating transactions`);
+
+    if (initialTxns.length) {
+      console.log(`Existing transactions: ${initialTxns.length}`);
+
+      const txns = Object.entries(source.transactions);
+      const upholdTxns = txns.filter(
+        ([, { site }]) => site === Utils.Exchange.Uphold
+      );
+      const geminiTxns = txns.filter(
+        ([, { site }]) => site === Utils.Exchange.Gemini
+      );
+      const cnbaseTxns = txns.filter(
+        ([, { site }]) => site === Utils.Exchange.Coinbase
+      );
+
+      // Update Uphold only if necessary
+      const upholdTransactionIDs = await Uphold.getTransactionIDs(
+        upholdTxns.length
+      );
+      if (upholdTxns.length < upholdTransactionIDs.length) {
+        for (const upholdTransactionID of upholdTransactionIDs) {
+          if (upholdTransactionID in source.transactions === false) {
+            const details = await Uphold.getTransactionByID(
+              upholdTransactionID
+            );
+            source.transactions[upholdTransactionID] = details;
+          }
+        }
+      }
+
+      // Get most recent timestamp for Gemini
+      // TODO: Make sure this timestamp works as intended
+      const geminiTimestamp = Math.max(
+        ...geminiTxns.map(([, { date }]) => date)
+      );
+      const geminiOrders = await Gemini.getOrders(geminiTimestamp);
+      for (const [id, details] of Object.entries(geminiOrders)) {
+        source.transactions[id] = details;
+      }
+
+      // Get most recent timestamp for Coinbase
+      const coinbaseTimestamp = Math.max(
+        ...cnbaseTxns.map(([, { date }]) => date)
+      );
+      const coinbaseOrders = await Coinbase.getOrders(coinbaseTimestamp);
+      for (const [id, details] of Object.entries(coinbaseOrders)) {
+        source.transactions[id] = details;
+      }
+    } else {
+      source.transactions = {
+        ...(await Uphold.getOrders()),
+        ...(await Gemini.getOrders()),
+        ...(await Coinbase.getOrders()),
+      };
+    }
+    const finalTxns = Object.keys(source.transactions);
+    if (finalTxns.length > initialTxns.length) {
+      console.log(`New transactions: ${finalTxns.length - initialTxns.length}`);
+    } else if (finalTxns.length === initialTxns.length) {
+      console.log(`No new transactions`);
+    }
+    console.groupEnd();
+  } catch (err: any) {
+    console.log(err);
+  }
+
+  /**
+   * Update 'braveAds' property
+   */
+  console.group("Brave Rewards, Ads, and BAT History");
+
+  await Brave.getActiveCampaigns()
+    .then((data) => {
+      source.braveAds = data;
+    })
+    .catch((err: Error) => {
+      console.log(err);
+    });
+
+  /**
+   * Update 'bat' property.
+   *
+   * This information is derived from the public blockchain, and
+   * is retrieved via ethplorer.io. These metrics DO NOT pertain
+   * to the operation of Brave Rewards. As such, the 'holders'
+   * count is not indicative of the number of users within the
+   * Brave Rewards program. Likewise, the number of 'transfers'
+   * is not the same as the number of tips/contributions issued
+   * by Rewards users to verified content creators.
+   */
+  await Promise.all([Brave.getBATInfo(), Brave.getBATHistory()])
+    .then(([I, H]) => {
+      source.bat = {
+        price: I.price.rate,
+        holders: I.holdersCount,
+        marketcap: I.price.marketCapUsd,
+        transactions: I.transfersCount,
+        history: H.Data.Data.reduce(
+          (acc: any, cur: Brave.CryptoCompareData) => {
+            return (acc[cur.time] = cur.close), acc;
+          },
+          {} as Record<number, number>[]
+        ),
+      };
+    })
+    .catch((err: Error) => {
+      console.log(err);
+    });
+
+  /**
+   * Update 'wallets' property
+   */
+  await Brave.getRewardsPayoutRecordHistory()
+    .then((data) => {
+      const latestCount = data[data.length - 1];
+      if (latestCount) {
+        // Round to nearest 100,000
+        const wallets = Utils.roundToNearest(
+          parseInt(latestCount.total_number_of_wallets),
+          100_000
+        );
+        if (source.wallets && wallets !== source.wallets) {
+          Utils.debugLOG(
+            `Updating wallets from ${source.wallets} to ${wallets}`
+          );
+        } else if (!source.wallets) {
+          Utils.debugLOG(`Setting wallets to ${wallets}`);
+        }
+        source.wallets = wallets;
+      }
+    })
+    .catch((err: Error) => {
+      console.log(err);
+    });
+
+  console.groupEnd();
+
+  /**
+   * Update 'updated' property
+   */
+  source.updated = Date.now();
+
+  return source;
+};
