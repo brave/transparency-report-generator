@@ -12,12 +12,17 @@ if (!KEY || !SECRET) {
 /**
  * https://docs.gemini.com/rest-api/#get-past-trades
  */
+enum TradeTypes {
+  Buy = "Buy",
+  Sell = "Sell",
+}
+
 interface Trade {
   price: number;
-  amount: number;
+  amount: string;
   timestamp: number;
   timestampms: number;
-  type: "Buy" | "Sell";
+  type: TradeTypes;
   aggressor: boolean;
   fee_currency: string;
   fee_amount: number;
@@ -128,9 +133,12 @@ export async function getOrders(
     afterTimestamp = trades[0].timestamp;
 
     for (const trade of trades) {
+
+      if (trade.type !== TradeTypes.Buy) continue;
+
       const id = trade.order_id;
       const time = trade.timestampms;
-      const amount = trade.amount;
+      const amount = parseFloat(trade.amount);
 
       /**
        * A trade for this order has already been encountered.
