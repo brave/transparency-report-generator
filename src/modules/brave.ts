@@ -3,11 +3,6 @@ import { debugLOG } from "../utils.js";
 
 const ADS_SERVER_STATS_CREDENTIAL = process.env.ADS_SERVER_STATS_CREDENTIAL;
 
-interface GeoCode {
-  code: string;
-  name: string;
-}
-
 export interface RegionCampaigns {
   country: string;
   count: string;
@@ -113,31 +108,13 @@ export async function getBATHistory(): Promise<CryptoCompareResponse> {
   return response;
 }
 
-export async function getSupportedRegionGeoCodes(): Promise<GeoCode[]> {
-  debugLOG("Requesting list of supported regions from ads-static.brave.com");
-  const endpoint = `https://ads-static.brave.com/v1/geoCode`;
-  const response = (await (await fetch(endpoint)).json()) as GeoCode[];
-  debugLOG("Retrieved list of supported regions from ads-static.brave.com");
-  return response;
-}
-
 export async function getActiveCampaigns(): Promise<RegionCampaigns[]> {
   debugLOG("Requesting list of active campaigns from ads-serve.brave.com");
   const endpoint = `https://ads-serve.brave.com/v1/stat/campaign/summary`;
   const headers = { Authorization: `Bearer ${ADS_SERVER_STATS_CREDENTIAL}` };
-  const regionCodes = await getSupportedRegionGeoCodes();
   const response = (await (
     await fetch(endpoint, { headers })
   ).json()) as RegionCampaigns[];
   debugLOG("Retrieved list of active campaigns from ads-serve.brave.com");
-  // Get `name` from regionCodes and add to response entries
-  return response.map((entry: RegionCampaigns) => {
-    const regionCode = regionCodes.find(
-      (code: GeoCode) => code.code === entry.country
-    );
-    if (regionCode) {
-      return { ...entry, name: regionCode.name };
-    }
-    return entry;
-  });
+  return response;
 }
