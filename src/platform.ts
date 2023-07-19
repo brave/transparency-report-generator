@@ -33,6 +33,17 @@ export const handler = async () => {
    */
   console.group("Metrics (bravebat.info)");
 
+  /**
+   * Ensure that the 'metrics' property exists
+   */
+  if (!source.metrics) {
+    source.metrics = {
+      growth: {},
+      categories: {},
+      categoryGrowth: {},
+    };
+  }
+
   await BBI.getCreatorGrowth()
     .then((results) => {
       const entries = Object.entries(results);
@@ -81,6 +92,18 @@ export const handler = async () => {
   console.groupEnd();
 
   /**
+   * Update 'transactions' property
+   */
+  console.group(`Updating transactions`);
+
+  /**
+   * Ensure that the 'transactions' property exists
+   */
+  if (!source.transactions) {
+    source.transactions = {};
+  }
+
+  /**
    * Update 'transactions' property.
    *
    * To avoid having to completely rebuild the entire transaction
@@ -95,7 +118,6 @@ export const handler = async () => {
    */
   try {
     const initialTxns = Object.keys(source.transactions);
-    console.group(`Updating transactions`);
 
     if (initialTxns.length) {
       console.log(`Existing transactions: ${initialTxns.length}`);
@@ -157,10 +179,11 @@ export const handler = async () => {
     } else if (finalTxns.length === initialTxns.length) {
       console.log(`No new transactions`);
     }
-    console.groupEnd();
   } catch (err: any) {
     console.log(err);
   }
+
+  console.groupEnd();
 
   /**
    * Update 'braveAds' property
