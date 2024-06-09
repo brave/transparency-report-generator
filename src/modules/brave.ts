@@ -103,9 +103,11 @@ export async function getMauDau(): Promise<MauDauResponse> {
   const endpoint = process.env.BRAVE_MAUDAU_URL;
   const response = await fetch(endpoint).then((res) => res.json()) as MauDauResponse;
   // Round the figures to the nearest 100K
-  for (const date of Object.keys(response) as (keyof typeof response)[]) {
-    for (const key of Object.keys(response[date]) as (keyof typeof response[typeof date])[]) {
-      response[date][key] = roundToNearest(response[date][key], 1e5);
+  for (const date in response) {
+    const entry = response[date as keyof typeof response];
+    for (const key in entry) {
+      const tKey = key as keyof typeof entry;
+      entry[tKey] = roundToNearest(entry[tKey], 1e5);
     }
   }
   debugLOG("Retrieved MAU/DAU data from BRAVE_MAUDAU_URL");
