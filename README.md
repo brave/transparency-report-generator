@@ -14,6 +14,7 @@ Several *environment variables* will be required for a successful run:
 - `GEMINI_API_KEY`
 - `GEMINI_API_SECRET`
 - `ADS_SERVER_STATS_CREDENTIAL`
+- `BRAVE_MAUDAU_URL`
 
 ## Building and Testing
 
@@ -28,7 +29,7 @@ Provider | API Key Required | Explanation of Use
 [Coinbase](https://docs.cloud.coinbase.com/exchange/reference) | ✔ | Querying for previous BAT purchases
 [Gemini](https://docs.gemini.com/rest-api/) | ✔ | Querying for previous BAT purchases
 [Uphold](https://uphold.com/en/developer/api/documentation/#introduction) | ✖ | Querying for previous BAT purchase details
-[bravebat.info](https://bravebat.info/docs/index.html) | ✖ | Community growth metrics
+[bravebat.info](https://bravebat.info/docs/index.html) | ✖ | Creator growth metrics
 [Ethplorer](https://github.com/EverexIO/Ethplorer/wiki/Ethplorer-API) | ✔* | Querying for BAT info and metrics
 [CryptoCompare](https://min-api.cryptocompare.com/documentation) | ✖ | Querying for historical BAT value data
 Brave | ✔ | Querying for Ads data and Rewards metrics
