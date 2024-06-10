@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { debugLOG } from "../utils.js";
+import { debugLOG, roundToNearest } from "../utils.js";
 
 const ADS_SERVER_STATS_CREDENTIAL = process.env.ADS_SERVER_STATS_CREDENTIAL;
 
@@ -71,6 +71,14 @@ export interface CryptoCompareData {
   conversionSymbol: string;
 }
 
+interface MauDauResponse {
+  [date: string]: {
+    browser_mau_adjusted: number;
+    browser_mau_historical: number;
+    browser_dau_monthly_avg: number;
+  };
+}
+
 // TODO: Sparse data; nothing after 2022-04-01.
 export async function getRewardsPayoutRecordHistory(): Promise<
   RewardsInstanceCount[]
@@ -85,6 +93,25 @@ export async function getRewardsPayoutRecordHistory(): Promise<
   return response.sort((a: RewardsInstanceCount, b: RewardsInstanceCount) =>
     a.date.localeCompare(b.date)
   );
+}
+
+export async function getMauDau(): Promise<MauDauResponse> {
+  if (!process.env.BRAVE_MAUDAU_URL) {
+    throw new Error("Environment variable BRAVE_MAUDAU_URL is not set");
+  }
+  debugLOG("Requesting MAU/DAU data from BRAVE_MAUDAU_URL");
+  const endpoint = process.env.BRAVE_MAUDAU_URL;
+  const response = await fetch(endpoint).then((res) => res.json()) as MauDauResponse;
+  // Round the figures to the nearest 100K
+  for (const date in response) {
+    const entry = response[date as keyof typeof response];
+    for (const key in entry) {
+      const tKey = key as keyof typeof entry;
+      entry[tKey] = roundToNearest(entry[tKey], 1e5);
+    }
+  }
+  debugLOG("Retrieved MAU/DAU data from BRAVE_MAUDAU_URL");
+  return response;
 }
 
 export async function getBATInfo(): Promise<TokenInfo> {

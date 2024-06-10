@@ -29,6 +29,46 @@ export const handler = async () => {
   }
 
   /**
+   * Update 'users' property
+   */
+  console.group("Active Users");
+
+  await Brave.getMauDau()
+    .then((data) => {
+
+      if (!source.users) {
+        source.users = {};
+      }
+
+      for (let [date, stats] of Object.entries(data)) {
+        // If we have any zero values in stats, skip this entry
+        if (Object.values(stats).some((value) => value === 0)) {
+          continue;
+        }
+        // Convert YYYY-MM-DD to YYYY-MM
+        if (/\d{4}-\d{2}-\d{2}/.test(date)) {
+          date = date.substring(0, 7);
+        }
+
+        source.users[date] = {
+          mau: stats.browser_mau_adjusted,
+          dau: stats.browser_dau_monthly_avg,
+        };
+      }
+      // Sort entries with recent dates earlier in the object
+      source.users = Object.fromEntries(
+        Object.entries(source.users).sort(([aDate], [bDate]) => {
+          return aDate < bDate ? 1 : -1;
+        })
+      );
+    })
+    .catch((err: Error) => {
+      console.log(err);
+    });
+
+  console.groupEnd();
+
+  /**
    * Update 'metrics' property
    */
   console.group("Metrics (bravebat.info)");
@@ -61,29 +101,6 @@ export const handler = async () => {
         const stats: number = latestStats[channelType];
         source.metrics.categories[label] = stats;
       }
-    })
-    .catch((err: Error) => {
-      console.log(err);
-    });
-
-  /**
-   * Update 'users' property
-   */
-  await BBI.getUsers()
-    .then(({ mau, dau }) => {
-      const mauLabels = mau.labels;
-      const mauValues = Object.values(mau.data)[0];
-      const dauValues = Object.values(dau.data)[0];
-      source.users = mauLabels.reduce((acc, label, i) => {
-        acc[label] = {
-          /**
-           * Raw values are decimal numbers, so we need to multiply.
-           */
-          mau: mauValues[i] * 1_000_000,
-          dau: dauValues[i] * 1_000_000,
-        };
-        return acc;
-      }, {} as Utils.TransparencyFile["users"]);
     })
     .catch((err: Error) => {
       console.log(err);
