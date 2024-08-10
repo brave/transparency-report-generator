@@ -54,8 +54,8 @@ function signRequest(
   time: number,
   SECRET: string,
   path: string,
-  method: string = "GET",
-  body: string = ""
+  method = "GET",
+  body = ""
 ): string {
   const key = Buffer.from(SECRET, "base64");
   const hmac = crypto.createHmac("sha256", key);
@@ -67,7 +67,7 @@ function signRequest(
  * https://docs.cloud.coinbase.com/exchange/reference/exchangerestapi_getorders
  */
 async function _getOrders(
-  since: number = 0,
+  since = 0,
   pageCursor: CoinbaseCursor = {}
 ): Promise<CoinbaseOrder[]> {
   debugLOG(`Requesting orders from Coinbase`);
@@ -129,7 +129,7 @@ function isValidOrder(order: CoinbaseOrder, since: number): boolean {
 }
 
 export async function getOrders(
-  since: number = 0
+  since = 0
 ): Promise<Record<string, TransactionOrder>> {
   console.group("Coinbase");
   const orders = await _getOrders(since);

@@ -71,18 +71,14 @@ export interface CryptoCompareData {
   conversionSymbol: string;
 }
 
-interface MauDauResponse {
-  [date: string]: {
-    browser_mau_adjusted: number;
-    browser_mau_historical: number;
-    browser_dau_monthly_avg: number;
-  };
-}
+type MauDauResponse = Record<string, {
+  browser_mau_adjusted: number;
+  browser_mau_historical: number;
+  browser_dau_monthly_avg: number;
+}>;
 
 // TODO: Sparse data; nothing after 2022-04-01.
-export async function getRewardsPayoutRecordHistory(): Promise<
-  RewardsInstanceCount[]
-> {
+export async function getRewardsPayoutRecordHistory(): Promise<RewardsInstanceCount[]> {
   debugLOG("Requesting count of Rewards instances");
   const endpoint = `https://ads-serve.brave.com/v1/stat/payout`;
   const headers = { Authorization: `Bearer ${ADS_SERVER_STATS_CREDENTIAL}` };
