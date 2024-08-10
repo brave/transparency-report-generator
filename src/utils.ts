@@ -63,8 +63,11 @@ export function roundToNearest(number: number, nearest: number): number {
 }
 
 export async function getFile(filepath: string) {
+
+  let contents: string;
+
   if (filepath.startsWith("http")) {
-    var contents = await new Promise<string>((resolve, reject) => {
+    contents = await new Promise<string>((resolve, reject) => {
       get(filepath, (response) => {
         let data = "";
         response.on("data", (chunk) => (data += chunk));
@@ -74,12 +77,13 @@ export async function getFile(filepath: string) {
       });
     });
   } else {
-    var contents = await readFile(filepath, "utf-8");
+    contents = await readFile(filepath, "utf-8");
   }
 
   if (filepath.endsWith(".json")) {
     return JSON.parse(contents);
   }
+
   return contents;
 }
 

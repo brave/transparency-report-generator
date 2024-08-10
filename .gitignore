@@ -18,6 +18,9 @@ lib-cov
 coverage
 test.js
 
+# Editor directories
+.vscode
+
 # nyc test coverage
 .nyc_output
 

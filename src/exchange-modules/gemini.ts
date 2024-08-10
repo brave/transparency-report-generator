@@ -51,7 +51,7 @@ function signRequest(secret: string, payload: string): string {
  * https://docs.gemini.com/rest-api/#trade-history
  */
 export async function getOrders(
-  timestamp: number = 0
+  timestamp = 0
 ): Promise<Record<string, TransactionOrder>> {
   console.group("Gemini");
   const results: Record<string, TransactionOrder> = {};
@@ -62,10 +62,11 @@ export async function getOrders(
    * and insignificant. By adding 1ms, we will retrieve only trades which
    * occurred after these earlier test transactions.
    */
+  let hasTrades = true;
   let afterTimestamp = timestamp || 1649111057653;
 
-  while (true) {
-    let afterDate = new Date(afterTimestamp).toLocaleString();
+  while (hasTrades) {
+    const afterDate = new Date(afterTimestamp).toLocaleString();
 
     debugLOG(
       `Requesting transactions${timestamp > 0 ? ` since ${afterDate}` : ``}`
@@ -113,53 +114,51 @@ export async function getOrders(
 
     if (trades.length == 0) {
       debugLOG(`No more transactions to retrieve from Gemini`);
-      break;
-    } else if (trades.length > 0) {
-      const firstDate = new Date(trades[0].timestampms).toLocaleString();
-      const lastDate = new Date(
-        trades[trades.length - 1].timestampms
-      ).toLocaleString();
-      debugLOG(
-        `Retrieved ${trades.length} trades spanning ${lastDate} to ${firstDate}`
-      );
+      hasTrades = false;
     }
 
-    /**
-     * Because trades are sorted with the most recent first, we can
-     * add 1ms to the first item's timestamp to ensure we don't get
-     * duplicate trades in the next request.
-     * See: https://docs.gemini.com/rest-api/#get-past-trades
-     */
-    afterTimestamp = trades[0].timestamp;
-
-    for (const trade of trades) {
-
-      if (trade.type !== TradeTypes.Buy) continue;
-
-      const id = trade.order_id;
-      const time = trade.timestampms;
-      const amount = parseFloat(trade.amount);
+    if ( trades.length > 0 ) {
+      const firstDate = new Date(trades[0].timestampms).toLocaleString();
+      const lastDate = new Date(trades[trades.length - 1].timestampms).toLocaleString();
+      debugLOG(`Retrieved ${trades.length} trades spanning ${lastDate} to ${firstDate}`);
 
       /**
-       * A trade for this order has already been encountered.
-       * Let's push the date back for this order if necessary,
-       * and increase the total amount of associated BAT too.
+       * Because trades are sorted with the most recent first, we can
+       * add 1ms to the first item's timestamp to ensure we don't get
+       * duplicate trades in the next request.
+       * See: https://docs.gemini.com/rest-api/#get-past-trades
        */
-      if (results.hasOwnProperty(id)) {
-        const newAmount = parseFloat(results[id].BAT) + amount;
-        results[id].date = Math.min(results[id].date, time);
-        results[id].BAT = newAmount.toString();
-        continue;
+      afterTimestamp = trades[0].timestamp;
+
+      for (const trade of trades) {
+
+        if (trade.type !== TradeTypes.Buy) continue;
+
+        const id = trade.order_id;
+        const time = trade.timestampms;
+        const amount = parseFloat(trade.amount);
+
+        /**
+         * A trade for this order has already been encountered.
+         * Let's push the date back for this order if necessary,
+         * and increase the total amount of associated BAT too.
+         */
+        if (results[id]) {
+          const newAmount = parseFloat(results[id].BAT) + amount;
+          results[id].date = Math.min(results[id].date, time);
+          results[id].BAT = newAmount.toString();
+          continue;
+        }
+
+        /**
+         * This is the first time we've encountered this order.
+         */
+        results[id] = {
+          date: time,
+          site: Exchange.Gemini,
+          BAT: amount.toString(),
+        };
       }
-
-      /**
-       * This is the first time we've encountered this order.
-       */
-      results[id] = {
-        date: time,
-        site: Exchange.Gemini,
-        BAT: amount.toString(),
-      };
     }
   }
 

@@ -16,7 +16,7 @@ interface UpholdTransaction {
 }
 
 export async function getTransactionIDs(
-  knownIDs: number = 0
+  knownIDs = 0
 ): Promise<string[]> {
   console.group("Uphold");
   debugLOG("Requesting transaction IDs");
@@ -64,7 +64,7 @@ export async function getTransactionByID(
  * This method is provided for parity with the other modules.
  */
 export async function getOrders(
-  timestamp: number = 0
+  timestamp = 0
 ): Promise<Record<string, TransactionOrder>> {
   const transactions = await getTransactionIDs();
   const results: Record<string, TransactionOrder> = {};

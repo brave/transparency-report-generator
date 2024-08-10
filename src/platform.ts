@@ -7,9 +7,7 @@ import * as Coinbase from "./exchange-modules/coinbase.js";
 
 // https://docs.aws.amazon.com/lambda/latest/dg/nodejs-handler.html
 export const handler = async () => {
-  /**
-   * Get existing data, if any
-   */
+  // Get existing data, if any
   let source: Utils.TransparencyFile = {} as Utils.TransparencyFile;
   try {
     source = await Utils.getFile("https://brave.com/transparency-data.json");
@@ -18,19 +16,14 @@ export const handler = async () => {
      * the source file was last updated.
      */
     if (process.env.DEBUG === "true") {
-      const hoursAgo = (
-        (Date.now() - source.updated) /
-        (1000 * 60 * 60)
-      ).toFixed(1);
+      const hoursAgo = ((Date.now() - source.updated) / (36e5)).toFixed(1);
       console.log(`Last updated ${hoursAgo} hours ago`);
     }
-  } catch (err: any) {
-    Utils.debugLOG(err);
+  } catch (err) {
+    Utils.debugLOG((err as Error).message);
   }
 
-  /**
-   * Update 'users' property
-   */
+  // Update 'users' property
   console.group("Active Users");
 
   await Brave.getMauDau()
@@ -40,17 +33,21 @@ export const handler = async () => {
         source.users = {};
       }
 
-      for (let [date, stats] of Object.entries(data)) {
+      for (const [date, stats] of Object.entries(data)) {
+
         // If we have any zero values in stats, skip this entry
         if (Object.values(stats).some((value) => value === 0)) {
           continue;
         }
+
+        let index = date;
+
         // Convert YYYY-MM-DD to YYYY-MM
-        if (/\d{4}-\d{2}-\d{2}/.test(date)) {
-          date = date.substring(0, 7);
+        if (/\d{4}-\d{2}-\d{2}/.test(index)) {
+          index = date.substring(0, 7);
         }
 
-        source.users[date] = {
+        source.users[index] = {
           mau: stats.browser_mau_adjusted,
           dau: stats.browser_dau_monthly_avg,
         };
@@ -68,14 +65,10 @@ export const handler = async () => {
 
   console.groupEnd();
 
-  /**
-   * Update 'metrics' property
-   */
+  // Update 'metrics' property
   console.group("Metrics (bravebat.info)");
 
-  /**
-   * Ensure that the 'metrics' property exists
-   */
+  // Ensure that the 'metrics' property exists
   if (!source.metrics) {
     source.metrics = {
       growth: {},
@@ -108,14 +101,10 @@ export const handler = async () => {
 
   console.groupEnd();
 
-  /**
-   * Update 'transactions' property
-   */
+  // Update 'transactions' property
   console.group(`Updating transactions`);
 
-  /**
-   * Ensure that the 'transactions' property exists
-   */
+  // Ensure that the 'transactions' property exists
   if (!source.transactions) {
     source.transactions = {};
   }
@@ -196,15 +185,13 @@ export const handler = async () => {
     } else if (finalTxns.length === initialTxns.length) {
       console.log(`No new transactions`);
     }
-  } catch (err: any) {
-    console.log(err);
+  } catch (err) {
+    console.log((err as Error).message);
   }
 
   console.groupEnd();
 
-  /**
-   * Update 'braveAds' property
-   */
+  // Update 'braveAds' property
   console.group("Brave Rewards, Ads, and BAT History");
 
   await Brave.getActiveCampaigns()
@@ -234,10 +221,10 @@ export const handler = async () => {
         marketcap: I.price.marketCapUsd,
         transactions: I.transfersCount,
         history: H.Data.Data.reduce(
-          (acc: any, cur: Brave.CryptoCompareData) => {
+          (acc, cur: Brave.CryptoCompareData) => {
             return (acc[cur.time] = cur.close), acc;
           },
-          {} as Record<number, number>[]
+          {} as Record<number, number>
         ),
       };
     })
@@ -245,9 +232,7 @@ export const handler = async () => {
       console.log(err);
     });
 
-  /**
-   * Update 'wallets' property
-   */
+  // Update 'wallets' property
   await Brave.getRewardsPayoutRecordHistory()
     .then((data) => {
       const latestCount = data[data.length - 1];
@@ -273,9 +258,7 @@ export const handler = async () => {
 
   console.groupEnd();
 
-  /**
-   * Update 'updated' property
-   */
+  // Update 'updated' property
   source.updated = Date.now();
 
   return source;

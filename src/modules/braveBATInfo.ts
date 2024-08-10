@@ -6,9 +6,7 @@ interface GrowthRecord {
   total: number;
 }
 
-interface CategoryGrowthStats {
-  [key: string]: Record<string, number>;
-}
+type CategoryGrowthStats = Record<string, Record<string, number>>;
 
 export async function getCreatorGrowth() {
   debugLOG("Requesting creator growth from BraveBAT.info");
@@ -25,7 +23,7 @@ export async function getCreatorGrowth() {
     /**
      * Make sure records are in chronological order so that
      * when we iterate, the most recent data is always last.
-     */
+     * */
     records.sort((a, b) => {
       const aDate = new Date(a.record_date);
       const bDate = new Date(b.record_date);
