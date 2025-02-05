@@ -41,13 +41,15 @@ export const handler = async () => {
       }
 
       for (let [date, stats] of Object.entries(data)) {
-        // If we have any zero values in stats, skip this entry
-        if (Object.values(stats).some((value) => value === 0)) {
-          continue;
-        }
         // Convert YYYY-MM-DD to YYYY-MM
         if (/\d{4}-\d{2}-\d{2}/.test(date)) {
           date = date.substring(0, 7);
+        }
+
+        // If we have any zero values in stats, skip this entry.
+        // This check only applies to dates prior to 2025-01.
+        if (date < "2025-01" && Object.values(stats).some((value) => value === 0)) {
+          continue;
         }
 
         source.users[date] = {
