@@ -65,3 +65,4 @@ typings/
 dist/
 transparency-report.json
 transparency.json
+/.vscode
