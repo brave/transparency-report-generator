@@ -1,5 +1,5 @@
-import fetch from "node-fetch";
-import { debugLOG, Exchange, getFile, TransactionOrder } from "../utils.js";
+import fetch from 'node-fetch'
+import { debugLOG, Exchange, getFile, TransactionOrder } from '../utils.js'
 
 /**
  * These are not complete interfaces. More information can be found
@@ -15,46 +15,46 @@ interface UpholdTransaction {
   destination: Destination;
 }
 
-export async function getTransactionIDs(
-  knownIDs: number = 0
+export async function getTransactionIDs (
+  knownIDs = 0
 ): Promise<string[]> {
-  console.group("Uphold");
-  debugLOG("Requesting transaction IDs");
+  console.group('Uphold')
+  debugLOG('Requesting transaction IDs')
 
-  const filename = "transactionIDs";
-  const contents = await getFile(filename);
+  const filename = 'transactionIDs'
+  const contents = await getFile(filename)
 
   const IDs = contents
-    .split(`\n`)
-    .filter((id: string) => id && !id.startsWith("#"));
+    .split('\n')
+    .filter((id: string) => id && !id.startsWith('#'))
 
-  debugLOG(`Retrieved ${IDs.length} Uphold transaction IDs`);
+  debugLOG(`Retrieved ${IDs.length} Uphold transaction IDs`)
 
   if (IDs.length === knownIDs) {
-    debugLOG("No new transactions");
+    debugLOG('No new transactions')
   }
 
-  console.groupEnd();
+  console.groupEnd()
 
-  return IDs;
+  return IDs
 }
 
-export async function getTransactionByID(
+export async function getTransactionByID (
   txnID: string
 ): Promise<TransactionOrder> {
-  console.group("Uphold");
-  debugLOG(`Requesting transaction ${txnID} from Uphold`);
+  console.group('Uphold')
+  debugLOG(`Requesting transaction ${txnID} from Uphold`)
 
-  const endpoint = `https://api.uphold.com/v0/reserve/transactions/${txnID}`;
-  const response = (await (await fetch(endpoint)).json()) as UpholdTransaction;
+  const endpoint = `https://api.uphold.com/v0/reserve/transactions/${txnID}`
+  const response = (await (await fetch(endpoint)).json()) as UpholdTransaction
 
-  debugLOG(`Retrieved details for transaction ${txnID} from Uphold`);
-  console.groupEnd();
+  debugLOG(`Retrieved details for transaction ${txnID} from Uphold`)
+  console.groupEnd()
   return {
     date: new Date(response.createdAt).getTime(),
     site: Exchange.Uphold,
-    BAT: parseFloat(response.destination.amount).toFixed(2),
-  };
+    BAT: parseFloat(response.destination.amount).toFixed(2)
+  }
 }
 
 /**
@@ -63,16 +63,16 @@ export async function getTransactionByID(
  * IDs from a local file, and then use that list to retrieve the details of each transaction.
  * This method is provided for parity with the other modules.
  */
-export async function getOrders(
-  timestamp: number = 0
+export async function getOrders (
+  timestamp = 0
 ): Promise<Record<string, TransactionOrder>> {
-  const transactions = await getTransactionIDs();
-  const results: Record<string, TransactionOrder> = {};
+  const transactions = await getTransactionIDs()
+  const results: Record<string, TransactionOrder> = {}
   for (const transaction of transactions) {
-    const order = await getTransactionByID(transaction);
+    const order = await getTransactionByID(transaction)
     if (order.date > timestamp) {
-      results[transaction] = order;
+      results[transaction] = order
     }
   }
-  return results;
+  return results
 }

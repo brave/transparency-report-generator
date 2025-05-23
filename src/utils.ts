@@ -1,17 +1,17 @@
-import { get } from "node:https";
-import { readFile } from "node:fs/promises";
-import { RegionCampaigns } from "./modules/brave";
+import { get } from 'node:https'
+import { readFile } from 'node:fs/promises'
+import { RegionCampaigns } from './modules/brave'
+
+export enum Exchange {
+  Uphold = 'Uphold',
+  Coinbase = 'Coinbase',
+  Gemini = 'Gemini',
+}
 
 export interface TransactionOrder {
   BAT: string;
   date: number;
-  site: Exchange.Uphold | Exchange.Coinbase | Exchange.Gemini;
-}
-
-export enum Exchange {
-  Uphold = "Uphold",
-  Coinbase = "Coinbase",
-  Gemini = "Gemini",
+  site: Exchange;
 }
 
 export interface TransparencyFile {
@@ -41,50 +41,56 @@ export interface TransparencyFile {
 }
 
 export const channelLabels = {
-  website: "Websites",
-  twitter: "Twitter",
-  youtube: "YouTube",
-  reddit: "Reddit",
-  github: "GitHub",
-  vimeo: "Vimeo",
-  twitch: "Twitch",
-} as Record<string, string>;
+  website: 'Websites',
+  twitter: 'Twitter',
+  youtube: 'YouTube',
+  reddit: 'Reddit',
+  github: 'GitHub',
+  vimeo: 'Vimeo',
+  twitch: 'Twitch'
+} as Record<string, string>
 
-export function labelize(platformStats: Record<string, number>) {
-  const labelized = {} as Record<string, number>;
+export function labelize (platformStats: Record<string, number>) {
+  const labelized = {} as Record<string, number>
   for (const platform in platformStats) {
-    labelized[channelLabels[platform]] = platformStats[platform];
+    labelized[channelLabels[platform]] = platformStats[platform]
   }
-  return labelized;
+  return labelized
 }
 
-export function roundToNearest(number: number, nearest: number): number {
-  return Math.round(number / nearest) * nearest;
+export function roundToNearest (number: number, nearest: number): number {
+  return Math.round(number / nearest) * nearest
 }
 
-export async function getFile(filepath: string) {
-  if (filepath.startsWith("http")) {
-    var contents = await new Promise<string>((resolve, reject) => {
+export async function getFile (filepath: string) {
+  let contents: string
+  if (filepath.startsWith('http')) {
+    contents = await new Promise<string>((resolve, reject) => {
       get(filepath, (response) => {
-        let data = "";
-        response.on("data", (chunk) => (data += chunk));
-        response.on("end", () => resolve(data));
-      }).on("error", (error) => {
-        reject(error);
-      });
-    });
+        let data = ''
+        response.on('data', (chunk) => (data += chunk))
+        response.on('end', () => resolve(data))
+      }).on('error', (error) => {
+        reject(error)
+      })
+    })
   } else {
-    var contents = await readFile(filepath, "utf-8");
+    contents = await readFile(filepath, 'utf-8')
   }
 
-  if (filepath.endsWith(".json")) {
-    return JSON.parse(contents);
+  if (filepath.endsWith('.json')) {
+    try {
+      return JSON.parse(contents)
+    } catch (error) {
+      console.error(`Error parsing JSON from ${filepath}:`, error)
+      return {}
+    }
   }
-  return contents;
+  return contents
 }
 
-export function debugLOG(message: string | object) {
-  if (process.env.DEBUG === "true") {
-    console.log(message);
+export function debugLOG (message: string | object) {
+  if (process.env.DEBUG === 'true') {
+    console.log(message)
   }
 }

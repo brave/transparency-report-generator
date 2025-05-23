@@ -1,20 +1,20 @@
-import fetch from "node-fetch";
-import crypto from "node:crypto";
-import { debugLOG, Exchange, TransactionOrder } from "../utils.js";
+import fetch from 'node-fetch'
+import crypto from 'node:crypto'
+import { debugLOG, Exchange, TransactionOrder } from '../utils.js'
 
-const KEY = process.env.GEMINI_API_KEY;
-const SECRET = process.env.GEMINI_API_SECRET;
+const KEY = process.env.GEMINI_API_KEY
+const SECRET = process.env.GEMINI_API_SECRET
 
 if (!KEY || !SECRET) {
-  throw new Error("Gemini API key and secret are required");
+  throw new Error('Gemini API key and secret are required')
 }
 
 /**
  * https://docs.gemini.com/rest-api/#get-past-trades
  */
 enum TradeTypes {
-  Buy = "Buy",
-  Sell = "Sell",
+  Buy = 'Buy',
+  Sell = 'Sell',
 }
 
 interface Trade {
@@ -29,14 +29,14 @@ interface Trade {
   tid: number;
   order_id: string;
   client_order_id: string;
-  exchange: "gemini";
+  exchange: 'gemini';
   is_clearing_fill: boolean;
   symbol: string;
   break?: string;
 }
 
-function signRequest(secret: string, payload: string): string {
-  return crypto.createHmac("sha384", secret).update(payload).digest("hex");
+function signRequest (secret: string, payload: string): string {
+  return crypto.createHmac('sha384', secret).update(payload).digest('hex')
 }
 
 /**
@@ -50,11 +50,11 @@ function signRequest(secret: string, payload: string): string {
  *
  * https://docs.gemini.com/rest-api/#trade-history
  */
-export async function getOrders(
-  timestamp: number = 0
+export async function getOrders (
+  timestamp = 0
 ): Promise<Record<string, TransactionOrder>> {
-  console.group("Gemini");
-  const results: Record<string, TransactionOrder> = {};
+  console.group('Gemini')
+  const results: Record<string, TransactionOrder> = {}
 
   /**
    * This timestamp corresponds to early test purchases made on Gemini.
@@ -62,66 +62,66 @@ export async function getOrders(
    * and insignificant. By adding 1ms, we will retrieve only trades which
    * occurred after these earlier test transactions.
    */
-  let afterTimestamp = timestamp || 1649111057653;
+  let afterTimestamp = timestamp || 1649111057653
 
   while (true) {
-    let afterDate = new Date(afterTimestamp).toLocaleString();
+    const afterDate = new Date(afterTimestamp).toLocaleString()
 
     debugLOG(
-      `Requesting transactions${timestamp > 0 ? ` since ${afterDate}` : ``}`
-    );
+      `Requesting transactions${timestamp > 0 ? ` since ${afterDate}` : ''}`
+    )
 
     const payload = Buffer.from(
       JSON.stringify({
         nonce: Date.now(),
-        request: "/v1/mytrades",
-        symbol: "batusd",
+        request: '/v1/mytrades',
+        symbol: 'batusd',
         timestamp: afterTimestamp + 1,
-        limit_trades: 500,
+        limit_trades: 500
       })
-    );
+    )
 
     const options = {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "text/plain",
-        "Content-Length": "0",
-        "X-GEMINI-APIKEY": KEY ?? "",
-        "X-GEMINI-PAYLOAD": payload.toString("base64"),
-        "X-GEMINI-SIGNATURE": signRequest(
-          SECRET ?? "",
-          payload.toString("base64")
+        'Content-Type': 'text/plain',
+        'Content-Length': '0',
+        'X-GEMINI-APIKEY': KEY ?? '',
+        'X-GEMINI-PAYLOAD': payload.toString('base64'),
+        'X-GEMINI-SIGNATURE': signRequest(
+          SECRET ?? '',
+          payload.toString('base64')
         ),
-        "Cache-Control": "no-cache",
-      },
-    };
+        'Cache-Control': 'no-cache'
+      }
+    }
 
-    const endpoint = "https://api.gemini.com/v1/mytrades";
-    const response = await fetch(endpoint, options);
+    const endpoint = 'https://api.gemini.com/v1/mytrades'
+    const response = await fetch(endpoint, options)
 
     if (!response.ok) {
       debugLOG(
         `Failed to retrieve transactions from Gemini${
-          timestamp > 0 ? `since ${afterDate}` : ``
+          timestamp > 0 ? `since ${afterDate}` : ''
         }`
-      );
-      debugLOG(await response.text());
-      break;
+      )
+      debugLOG(await response.text())
+      break
     }
 
-    const trades = (await response.json()) as Trade[];
+    const trades = (await response.json()) as Trade[]
 
-    if (trades.length == 0) {
-      debugLOG(`No more transactions to retrieve from Gemini`);
-      break;
+    if (trades.length === 0) {
+      debugLOG('No more transactions to retrieve from Gemini')
+      break
     } else if (trades.length > 0) {
-      const firstDate = new Date(trades[0].timestampms).toLocaleString();
+      const firstDate = new Date(trades[0].timestampms).toLocaleString()
       const lastDate = new Date(
         trades[trades.length - 1].timestampms
-      ).toLocaleString();
+      ).toLocaleString()
       debugLOG(
         `Retrieved ${trades.length} trades spanning ${lastDate} to ${firstDate}`
-      );
+      )
     }
 
     /**
@@ -130,26 +130,25 @@ export async function getOrders(
      * duplicate trades in the next request.
      * See: https://docs.gemini.com/rest-api/#get-past-trades
      */
-    afterTimestamp = trades[0].timestamp;
+    afterTimestamp = trades[0].timestamp
 
     for (const trade of trades) {
+      if (trade.type !== TradeTypes.Buy) continue
 
-      if (trade.type !== TradeTypes.Buy) continue;
-
-      const id = trade.order_id;
-      const time = trade.timestampms;
-      const amount = parseFloat(trade.amount);
+      const id = trade.order_id
+      const time = trade.timestampms
+      const amount = parseFloat(trade.amount)
 
       /**
        * A trade for this order has already been encountered.
        * Let's push the date back for this order if necessary,
        * and increase the total amount of associated BAT too.
        */
-      if (results.hasOwnProperty(id)) {
-        const newAmount = parseFloat(results[id].BAT) + amount;
-        results[id].date = Math.min(results[id].date, time);
-        results[id].BAT = newAmount.toString();
-        continue;
+      if (Object.keys(results).includes(id)) {
+        const newAmount = parseFloat(results[id].BAT) + amount
+        results[id].date = Math.min(results[id].date, time)
+        results[id].BAT = newAmount.toString()
+        continue
       }
 
       /**
@@ -158,11 +157,11 @@ export async function getOrders(
       results[id] = {
         date: time,
         site: Exchange.Gemini,
-        BAT: amount.toString(),
-      };
+        BAT: amount.toString()
+      }
     }
   }
 
-  console.groupEnd();
-  return results;
+  console.groupEnd()
+  return results
 }

@@ -1,79 +1,81 @@
-import * as Utils from "./utils.js";
-import * as Brave from "./modules/brave.js";
-import * as BBI from "./modules/braveBATInfo.js";
-import * as Uphold from "./exchange-modules/uphold.js";
-import * as Gemini from "./exchange-modules/gemini.js";
-import * as Coinbase from "./exchange-modules/coinbase.js";
+import * as Utils from './utils.js'
+import * as Brave from './modules/brave.js'
+import * as BBI from './modules/braveBATInfo.js'
+import * as Uphold from './exchange-modules/uphold.js'
+import * as Gemini from './exchange-modules/gemini.js'
+import * as Coinbase from './exchange-modules/coinbase.js'
 
 // https://docs.aws.amazon.com/lambda/latest/dg/nodejs-handler.html
 export const handler = async () => {
   /**
    * Get existing data, if any
    */
-  let source: Utils.TransparencyFile = {} as Utils.TransparencyFile;
+  let source: Utils.TransparencyFile = {} as Utils.TransparencyFile
   try {
-    source = await Utils.getFile("https://brave.com/transparency-data.json");
+    source = await Utils.getFile('https://brave.com/transparency-data.json')
     /**
      * If verbose logging is enabled, log how long it has been since
      * the source file was last updated.
      */
-    if (process.env.DEBUG === "true") {
+    if (process.env.DEBUG === 'true') {
       const hoursAgo = (
         (Date.now() - source.updated) /
         (1000 * 60 * 60)
-      ).toFixed(1);
-      console.log(`Last updated ${hoursAgo} hours ago`);
+      ).toFixed(1)
+      console.log(`Last updated ${hoursAgo} hours ago`)
     }
-  } catch (err: any) {
-    Utils.debugLOG(err);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.log('Failed to retrieve existing data')
+      Utils.debugLOG(err)
+    }
   }
 
   /**
    * Update 'users' property
    */
-  console.group("Active Users");
+  console.group('Active Users')
 
   await Brave.getMauDau()
     .then((data) => {
-
       if (!source.users) {
-        source.users = {};
+        source.users = {}
       }
 
       for (let [date, stats] of Object.entries(data)) {
         // Convert YYYY-MM-DD to YYYY-MM
         if (/\d{4}-\d{2}-\d{2}/.test(date)) {
-          date = date.substring(0, 7);
+          date = date.substring(0, 7)
         }
 
         // If we have any zero values in stats, skip this entry.
         // This check only applies to dates prior to 2025-01.
-        if (date < "2025-01" && Object.values(stats).some((value) => value === 0)) {
-          continue;
+        if (date < '2025-01' && Object.values(stats).some((value) => value === 0)) {
+          continue
         }
 
         source.users[date] = {
           mau: stats.browser_mau_adjusted,
-          dau: stats.browser_dau_monthly_avg,
-        };
+          dau: stats.browser_dau_monthly_avg
+        }
       }
       // Sort entries with recent dates earlier in the object
       source.users = Object.fromEntries(
         Object.entries(source.users).sort(([aDate], [bDate]) => {
-          return aDate < bDate ? 1 : -1;
+          return aDate < bDate ? 1 : -1
         })
-      );
+      )
     })
     .catch((err: Error) => {
-      console.log(err);
-    });
+      console.log(err)
+    })
 
-  console.groupEnd();
+  console.groupEnd()
 
   /**
    * Update 'metrics' property
    */
-  console.group("Metrics (bravebat.info)");
+  console.group('Metrics (bravebat.info)')
 
   /**
    * Ensure that the 'metrics' property exists
@@ -82,44 +84,44 @@ export const handler = async () => {
     source.metrics = {
       growth: {},
       categories: {},
-      categoryGrowth: {},
-    };
+      categoryGrowth: {}
+    }
   }
 
   await BBI.getCreatorGrowth()
     .then((results) => {
-      const entries = Object.entries(results);
-      const [, latestStats] = entries[entries.length - 1];
+      const entries = Object.entries(results)
+      const [, latestStats] = entries[entries.length - 1]
       // Transfer all new data to the source object
       for (const [month, stats] of entries) {
-        source.metrics.categoryGrowth[month] = Utils.labelize(stats);
+        source.metrics.categoryGrowth[month] = Utils.labelize(stats)
         source.metrics.growth[month] = Object.values(stats).reduce(
           (a, b) => a + b
-        );
+        )
       }
       // Apply up-to-date category figures to the source object
       for (const channelType in latestStats) {
-        const label: string = Utils.channelLabels[channelType];
-        const stats: number = latestStats[channelType];
-        source.metrics.categories[label] = stats;
+        const label: string = Utils.channelLabels[channelType]
+        const stats: number = latestStats[channelType]
+        source.metrics.categories[label] = stats
       }
     })
     .catch((err: Error) => {
-      console.log(err);
-    });
+      console.log(err)
+    })
 
-  console.groupEnd();
+  console.groupEnd()
 
   /**
    * Update 'transactions' property
    */
-  console.group(`Updating transactions`);
+  console.group('Updating transactions')
 
   /**
    * Ensure that the 'transactions' property exists
    */
   if (!source.transactions) {
-    source.transactions = {};
+    source.transactions = {}
   }
 
   /**
@@ -136,33 +138,33 @@ export const handler = async () => {
    * the delta and append it to the existing list.
    */
   try {
-    const initialTxns = Object.keys(source.transactions);
+    const initialTxns = Object.keys(source.transactions)
 
     if (initialTxns.length) {
-      console.log(`Existing transactions: ${initialTxns.length}`);
+      console.log(`Existing transactions: ${initialTxns.length}`)
 
-      const txns = Object.entries(source.transactions);
+      const txns = Object.entries(source.transactions)
       const upholdTxns = txns.filter(
         ([, { site }]) => site === Utils.Exchange.Uphold
-      );
+      )
       const geminiTxns = txns.filter(
         ([, { site }]) => site === Utils.Exchange.Gemini
-      );
+      )
       const cnbaseTxns = txns.filter(
         ([, { site }]) => site === Utils.Exchange.Coinbase
-      );
+      )
 
       // Update Uphold only if necessary
       const upholdTransactionIDs = await Uphold.getTransactionIDs(
         upholdTxns.length
-      );
+      )
       if (upholdTxns.length < upholdTransactionIDs.length) {
         for (const upholdTransactionID of upholdTransactionIDs) {
           if (upholdTransactionID in source.transactions === false) {
             const details = await Uphold.getTransactionByID(
               upholdTransactionID
-            );
-            source.transactions[upholdTransactionID] = details;
+            )
+            source.transactions[upholdTransactionID] = details
           }
         }
       }
@@ -171,51 +173,54 @@ export const handler = async () => {
       // TODO: Make sure this timestamp works as intended
       const geminiTimestamp = Math.max(
         ...geminiTxns.map(([, { date }]) => date)
-      );
-      const geminiOrders = await Gemini.getOrders(geminiTimestamp);
+      )
+      const geminiOrders = await Gemini.getOrders(geminiTimestamp)
       for (const [id, details] of Object.entries(geminiOrders)) {
-        source.transactions[id] = details;
+        source.transactions[id] = details
       }
 
       // Get most recent timestamp for Coinbase
       const coinbaseTimestamp = Math.max(
         ...cnbaseTxns.map(([, { date }]) => date)
-      );
-      const coinbaseOrders = await Coinbase.getOrders(coinbaseTimestamp);
+      )
+      const coinbaseOrders = await Coinbase.getOrders(coinbaseTimestamp)
       for (const [id, details] of Object.entries(coinbaseOrders)) {
-        source.transactions[id] = details;
+        source.transactions[id] = details
       }
     } else {
       source.transactions = {
         ...(await Uphold.getOrders()),
         ...(await Gemini.getOrders()),
-        ...(await Coinbase.getOrders()),
-      };
+        ...(await Coinbase.getOrders())
+      }
     }
-    const finalTxns = Object.keys(source.transactions);
+    const finalTxns = Object.keys(source.transactions)
     if (finalTxns.length > initialTxns.length) {
-      console.log(`New transactions: ${finalTxns.length - initialTxns.length}`);
+      console.log(`New transactions: ${finalTxns.length - initialTxns.length}`)
     } else if (finalTxns.length === initialTxns.length) {
-      console.log(`No new transactions`);
+      console.log('No new transactions')
     }
-  } catch (err: any) {
-    console.log(err);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.log('Failed to retrieve transactions')
+      Utils.debugLOG(err)
+    }
   }
 
-  console.groupEnd();
+  console.groupEnd()
 
   /**
    * Update 'braveAds' property
    */
-  console.group("Brave Rewards, Ads, and BAT History");
+  console.group('Brave Rewards, Ads, and BAT History')
 
   await Brave.getActiveCampaigns()
     .then((data) => {
-      source.braveAds = data;
+      source.braveAds = data
     })
     .catch((err: Error) => {
-      console.log(err);
-    });
+      console.log(err)
+    })
 
   /**
    * Update 'bat' property.
@@ -236,49 +241,50 @@ export const handler = async () => {
         marketcap: I.price.marketCapUsd,
         transactions: I.transfersCount,
         history: H.Data.Data.reduce(
-          (acc: any, cur: Brave.CryptoCompareData) => {
-            return (acc[cur.time] = cur.close), acc;
+          (acc, cur: Brave.CryptoCompareData) => {
+            acc[cur.time] = cur.close
+            return acc
           },
-          {} as Record<number, number>[]
-        ),
-      };
+          {} as Record<number, number>
+        )
+      }
     })
     .catch((err: Error) => {
-      console.log(err);
-    });
+      console.log(err)
+    })
 
   /**
    * Update 'wallets' property
    */
   await Brave.getRewardsPayoutRecordHistory()
     .then((data) => {
-      const latestCount = data[data.length - 1];
+      const latestCount = data[data.length - 1]
       if (latestCount) {
         // Round to nearest 10,000
         const wallets = Utils.roundToNearest(
           parseInt(latestCount.total_number_of_wallets),
           10_000
-        );
+        )
         if (source.wallets && wallets !== source.wallets) {
           Utils.debugLOG(
             `Updating wallets from ${source.wallets} to ${wallets}`
-          );
+          )
         } else if (!source.wallets) {
-          Utils.debugLOG(`Setting wallets to ${wallets}`);
+          Utils.debugLOG(`Setting wallets to ${wallets}`)
         }
-        source.wallets = wallets;
+        source.wallets = wallets
       }
     })
     .catch((err: Error) => {
-      console.log(err);
-    });
+      console.log(err)
+    })
 
-  console.groupEnd();
+  console.groupEnd()
 
   /**
    * Update 'updated' property
    */
-  source.updated = Date.now();
+  source.updated = Date.now()
 
-  return source;
-};
+  return source
+}
