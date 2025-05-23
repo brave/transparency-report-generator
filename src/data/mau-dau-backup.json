@@ -1,0 +1,327 @@
+{
+  "2025-04-01": {
+    "browser_mau_adjusted": 86860000,
+    "browser_mau_historical": 0,
+    "browser_dau_monthly_avg": 36910000
+  },
+  "2025-03-01": {
+    "browser_mau_adjusted": 84820000,
+    "browser_mau_historical": 0,
+    "browser_dau_monthly_avg": 37100000
+  },
+  "2025-02-01": {
+    "browser_mau_adjusted": 82690000,
+    "browser_mau_historical": 0,
+    "browser_dau_monthly_avg": 35570000
+  },
+  "2025-01-01": {
+    "browser_mau_adjusted": 80000000,
+    "browser_mau_historical": 0,
+    "browser_dau_monthly_avg": 34710000
+  },
+  "2024-12-01": {
+    "browser_mau_adjusted": 77270000,
+    "browser_mau_historical": 91650000,
+    "browser_dau_monthly_avg": 32060000
+  },
+  "2024-11-01": {
+    "browser_mau_adjusted": 75850000,
+    "browser_mau_historical": 86670000,
+    "browser_dau_monthly_avg": 32510000
+  },
+  "2024-10-01": {
+    "browser_mau_adjusted": 72430000,
+    "browser_mau_historical": 83530000,
+    "browser_dau_monthly_avg": 31640000
+  },
+  "2024-09-01": {
+    "browser_mau_adjusted": 71660000,
+    "browser_mau_historical": 83080000,
+    "browser_dau_monthly_avg": 30130000
+  },
+  "2024-08-01": {
+    "browser_mau_adjusted": 69800000,
+    "browser_mau_historical": 81080000,
+    "browser_dau_monthly_avg": 29880000
+  },
+  "2024-07-01": {
+    "browser_mau_adjusted": 68170000,
+    "browser_mau_historical": 77950000,
+    "browser_dau_monthly_avg": 28450000
+  },
+  "2024-06-01": {
+    "browser_mau_adjusted": 68280000,
+    "browser_mau_historical": 79780000,
+    "browser_dau_monthly_avg": 28300000
+  },
+  "2024-05-01": {
+    "browser_mau_adjusted": 67650000,
+    "browser_mau_historical": 78950000,
+    "browser_dau_monthly_avg": 28250000
+  },
+  "2024-04-01": {
+    "browser_mau_adjusted": 64070000,
+    "browser_mau_historical": 73550000,
+    "browser_dau_monthly_avg": 27150000
+  },
+  "2024-03-01": {
+    "browser_mau_adjusted": 61200000,
+    "browser_mau_historical": 73320000,
+    "browser_dau_monthly_avg": 25790000
+  },
+  "2024-02-01": {
+    "browser_mau_adjusted": 60460000,
+    "browser_mau_historical": 69290000,
+    "browser_dau_monthly_avg": 25550000
+  },
+  "2024-01-01": {
+    "browser_mau_adjusted": 59210000,
+    "browser_mau_historical": 67180000,
+    "browser_dau_monthly_avg": 25030000
+  },
+  "2023-12-01": {
+    "browser_mau_adjusted": 57010000,
+    "browser_mau_historical": 65170000,
+    "browser_dau_monthly_avg": 24570000
+  },
+  "2023-11-01": {
+    "browser_mau_adjusted": 57720000,
+    "browser_mau_historical": 65660000,
+    "browser_dau_monthly_avg": 24540000
+  },
+  "2023-10-01": {
+    "browser_mau_adjusted": 56020000,
+    "browser_mau_historical": 63370000,
+    "browser_dau_monthly_avg": 23900000
+  },
+  "2023-09-01": {
+    "browser_mau_adjusted": 54650000,
+    "browser_mau_historical": 63640000,
+    "browser_dau_monthly_avg": 23380000
+  },
+  "2023-08-01": {
+    "browser_mau_adjusted": 51610000,
+    "browser_mau_historical": 63830000,
+    "browser_dau_monthly_avg": 22960000
+  },
+  "2023-07-01": {
+    "browser_mau_adjusted": 59350000,
+    "browser_mau_historical": 59350000,
+    "browser_dau_monthly_avg": 22380000
+  },
+  "2023-06-01": {
+    "browser_mau_adjusted": 57760000,
+    "browser_mau_historical": 58570000,
+    "browser_dau_monthly_avg": 22170000
+  },
+  "2023-05-01": {
+    "browser_mau_adjusted": 58220000,
+    "browser_mau_historical": 58220000,
+    "browser_dau_monthly_avg": 22130000
+  },
+  "2023-04-01": {
+    "browser_mau_adjusted": 57270000,
+    "browser_mau_historical": 57270000,
+    "browser_dau_monthly_avg": 22060000
+  },
+  "2023-03-01": {
+    "browser_mau_adjusted": 57760000,
+    "browser_mau_historical": 57760000,
+    "browser_dau_monthly_avg": 21690000
+  },
+  "2023-02-01": {
+    "browser_mau_adjusted": 54800000,
+    "browser_mau_historical": 54800000,
+    "browser_dau_monthly_avg": 21240000
+  },
+  "2023-01-01": {
+    "browser_mau_adjusted": 57550000,
+    "browser_mau_historical": 57550000,
+    "browser_dau_monthly_avg": 20810000
+  },
+  "2022-12-01": {
+    "browser_mau_adjusted": 55450000,
+    "browser_mau_historical": 55450000,
+    "browser_dau_monthly_avg": 20110000
+  },
+  "2022-11-01": {
+    "browser_mau_adjusted": 56930000,
+    "browser_mau_historical": 56930000,
+    "browser_dau_monthly_avg": 20120000
+  },
+  "2022-10-01": {
+    "browser_mau_adjusted": 57350000,
+    "browser_mau_historical": 57350000,
+    "browser_dau_monthly_avg": 19920000
+  },
+  "2022-09-01": {
+    "browser_mau_adjusted": 56200000,
+    "browser_mau_historical": 56200000,
+    "browser_dau_monthly_avg": 19600000
+  },
+  "2022-08-01": {
+    "browser_mau_adjusted": 57420000,
+    "browser_mau_historical": 57420000,
+    "browser_dau_monthly_avg": 19300000
+  },
+  "2022-07-01": {
+    "browser_mau_adjusted": 59580000,
+    "browser_mau_historical": 59580000,
+    "browser_dau_monthly_avg": 19350000
+  },
+  "2022-06-01": {
+    "browser_mau_adjusted": 62380000,
+    "browser_mau_historical": 62380000,
+    "browser_dau_monthly_avg": 19200000
+  },
+  "2022-05-01": {
+    "browser_mau_adjusted": 59296933,
+    "browser_mau_historical": 59296933,
+    "browser_dau_monthly_avg": 18600000
+  },
+  "2022-04-01": {
+    "browser_mau_adjusted": 55481873,
+    "browser_mau_historical": 55481873,
+    "browser_dau_monthly_avg": 17900000
+  },
+  "2022-03-01": {
+    "browser_mau_adjusted": 52745795,
+    "browser_mau_historical": 52745795,
+    "browser_dau_monthly_avg": 17300000
+  },
+  "2022-02-01": {
+    "browser_mau_adjusted": 48972757,
+    "browser_mau_historical": 48972757,
+    "browser_dau_monthly_avg": 16200000
+  },
+  "2022-01-01": {
+    "browser_mau_adjusted": 54483109,
+    "browser_mau_historical": 54483109,
+    "browser_dau_monthly_avg": 16000000
+  },
+  "2021-12-01": {
+    "browser_mau_adjusted": 50165932,
+    "browser_mau_historical": 50165932,
+    "browser_dau_monthly_avg": 15500000
+  },
+  "2021-11-01": {
+    "browser_mau_adjusted": 46018968,
+    "browser_mau_historical": 46018968,
+    "browser_dau_monthly_avg": 14700000
+  },
+  "2021-10-01": {
+    "browser_mau_adjusted": 42074841,
+    "browser_mau_historical": 42074841,
+    "browser_dau_monthly_avg": 14000000
+  },
+  "2021-09-01": {
+    "browser_mau_adjusted": 38927844,
+    "browser_mau_historical": 38927844,
+    "browser_dau_monthly_avg": 13400000
+  },
+  "2021-08-01": {
+    "browser_mau_adjusted": 36223640,
+    "browser_mau_historical": 36223640,
+    "browser_dau_monthly_avg": 12500000
+  },
+  "2021-07-01": {
+    "browser_mau_adjusted": 34368518,
+    "browser_mau_historical": 34368518,
+    "browser_dau_monthly_avg": 11900000
+  },
+  "2021-06-01": {
+    "browser_mau_adjusted": 33835417,
+    "browser_mau_historical": 33835417,
+    "browser_dau_monthly_avg": 11700000
+  },
+  "2021-05-01": {
+    "browser_mau_adjusted": 32378779,
+    "browser_mau_historical": 32378779,
+    "browser_dau_monthly_avg": 11300000
+  },
+  "2021-04-01": {
+    "browser_mau_adjusted": 29916279,
+    "browser_mau_historical": 29916279,
+    "browser_dau_monthly_avg": 10600000
+  },
+  "2021-03-01": {
+    "browser_mau_adjusted": 28970618,
+    "browser_mau_historical": 28970618,
+    "browser_dau_monthly_avg": 9800000
+  },
+  "2021-02-01": {
+    "browser_mau_adjusted": 25388372,
+    "browser_mau_historical": 25388372,
+    "browser_dau_monthly_avg": 9400000
+  },
+  "2021-01-01": {
+    "browser_mau_adjusted": 25372730,
+    "browser_mau_historical": 25372730,
+    "browser_dau_monthly_avg": 8600000
+  },
+  "2020-12-01": {
+    "browser_mau_adjusted": 24057000,
+    "browser_mau_historical": 24057000,
+    "browser_dau_monthly_avg": 7800000
+  },
+  "2020-11-01": {
+    "browser_mau_adjusted": 22200000,
+    "browser_mau_historical": 22200000,
+    "browser_dau_monthly_avg": 7400000
+  },
+  "2020-10-01": {
+    "browser_mau_adjusted": 20497967,
+    "browser_mau_historical": 20497967,
+    "browser_dau_monthly_avg": 7000000
+  },
+  "2020-09-01": {
+    "browser_mau_adjusted": 19600000,
+    "browser_mau_historical": 19600000,
+    "browser_dau_monthly_avg": 6600000
+  },
+  "2020-08-01": {
+    "browser_mau_adjusted": 18300000,
+    "browser_mau_historical": 18300000,
+    "browser_dau_monthly_avg": 6100000
+  },
+  "2020-07-01": {
+    "browser_mau_adjusted": 16748649,
+    "browser_mau_historical": 16748649,
+    "browser_dau_monthly_avg": 5700000
+  },
+  "2020-06-01": {
+    "browser_mau_adjusted": 15635574,
+    "browser_mau_historical": 15635574,
+    "browser_dau_monthly_avg": 5300000
+  },
+  "2020-05-01": {
+    "browser_mau_adjusted": 15400000,
+    "browser_mau_historical": 15400000,
+    "browser_dau_monthly_avg": 0
+  },
+  "2020-04-01": {
+    "browser_mau_adjusted": 13900000,
+    "browser_mau_historical": 13900000,
+    "browser_dau_monthly_avg": 0
+  },
+  "2020-03-01": {
+    "browser_mau_adjusted": 13466141,
+    "browser_mau_historical": 13466141,
+    "browser_dau_monthly_avg": 0
+  },
+  "2020-02-01": {
+    "browser_mau_adjusted": 12148733,
+    "browser_mau_historical": 12148733,
+    "browser_dau_monthly_avg": 0
+  },
+  "2020-01-01": {
+    "browser_mau_adjusted": 11648596,
+    "browser_mau_historical": 11648596,
+    "browser_dau_monthly_avg": 0
+  },
+  "2019-12-01": {
+    "browser_mau_adjusted": 11200000,
+    "browser_mau_historical": 11200000,
+    "browser_dau_monthly_avg": 0
+  }
+}

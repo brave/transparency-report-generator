@@ -1,5 +1,5 @@
 import fetch from 'node-fetch'
-import { debugLOG, roundToNearest } from '../utils.js'
+import { debugLOG, getFile, roundToNearest } from '../utils.js'
 
 const ADS_SERVER_STATS_CREDENTIAL = process.env.ADS_SERVER_STATS_CREDENTIAL
 
@@ -101,7 +101,14 @@ export async function getMauDau (): Promise<MauDauResponse> {
   }
   debugLOG('Requesting MAU/DAU data from BRAVE_MAUDAU_URL')
   const endpoint = process.env.BRAVE_MAUDAU_URL
-  const response = await fetch(endpoint).then((res) => res.json()) as MauDauResponse
+  const response = await fetch(endpoint)
+    .then((res) => res.json())
+    .catch(() => {
+      // Fallback to local file if the request fails
+      debugLOG('  Failed to retrieve MAU/DAU data from BRAVE_MAUDAU_URL')
+      debugLOG('    Attempting to retrieve from local file')
+      return getFile('src/data/mau-dau-backup.json')
+    }) as MauDauResponse
   // Round the figures to the nearest 100K
   for (const date in response) {
     const entry = response[date as keyof typeof response]
@@ -110,7 +117,6 @@ export async function getMauDau (): Promise<MauDauResponse> {
       entry[tKey] = roundToNearest(entry[tKey], 1e5)
     }
   }
-  debugLOG('Retrieved MAU/DAU data from BRAVE_MAUDAU_URL')
   return response
 }
 

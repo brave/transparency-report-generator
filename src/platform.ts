@@ -38,6 +38,8 @@ export const handler = async () => {
 
   await Brave.getMauDau()
     .then((data) => {
+      console.log('  Retrieved %d MAU/DAU records', Object.keys(data).length)
+
       if (!source.users) {
         source.users = {}
       }
