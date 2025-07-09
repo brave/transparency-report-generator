@@ -175,7 +175,8 @@ export const handler = async () => {
       }
 
       // Get most recent timestamp for Gemini
-      const geminiTimestamp = Math.max(
+      // TODO (Sampson): Switch back to Math.max() when buggy data has been purged
+      const geminiTimestamp = Math.min(
         ...geminiTxns.map(([, { date }]) => date)
       )
       const geminiOrders = await Gemini.getOrders(geminiTimestamp)
