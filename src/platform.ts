@@ -150,10 +150,9 @@ export const handler = async () => {
         ([, { site }]) => site === Utils.Exchange.Uphold
       )
 
-      // TODO (Sampson): When buggy-data is resolved, re-enable this
-      // const geminiTxns = txns.filter(
-      //   ([, { site }]) => site === Utils.Exchange.Gemini
-      // )
+      const geminiTxns = txns.filter(
+        ([, { site }]) => site === Utils.Exchange.Gemini
+      )
 
       // TODO (Sampson): Update implementation to use newer Coinbase API
       const cnbaseTxns = txns.filter(
@@ -176,12 +175,9 @@ export const handler = async () => {
       }
 
       // Get most recent timestamp for Gemini
-      // TODO: Make sure this timestamp works as intended
-      // Using 0 for now to overwrite previously-entered buggy data
-      const geminiTimestamp = 0
-      // Math.max(
-      //   ...geminiTxns.map(([, { date }]) => date)
-      // )
+      const geminiTimestamp = Math.max(
+        ...geminiTxns.map(([, { date }]) => date)
+      )
       const geminiOrders = await Gemini.getOrders(geminiTimestamp)
       for (const [id, details] of Object.entries(geminiOrders)) {
         source.transactions[id] = details
