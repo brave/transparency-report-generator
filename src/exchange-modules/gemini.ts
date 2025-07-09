@@ -116,12 +116,16 @@ export async function getOrders (since = 0): Promise<Record<string, TransactionO
   let lastTimestamp = since
 
   while (true) {
+    console.log('Getting orders since', (new Date(lastTimestamp)).toISOString())
     const orders = await getOrdersSince(lastTimestamp)
 
     // If no orders are returned, we've reached the end of the history
     if (Object.keys(orders).length === 0) {
+      console.log('    No orders found, stopping')
       break
     }
+
+    console.log(`    Got ${orders.length} orders for dates: ${orders.map((order) => (new Date(order.timestampms)).toISOString()).join(', ')}`)
 
     // Add the orders to the results
     for (const order of orders) {
@@ -135,7 +139,7 @@ export async function getOrders (since = 0): Promise<Record<string, TransactionO
     }
 
     // Update the last timestamp to the next timestamp
-    lastTimestamp = parseInt(orders[0].timestamp) + 1
+    lastTimestamp = orders[0].timestampms + 1
   }
 
   console.groupEnd()
