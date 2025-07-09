@@ -35,131 +35,107 @@ interface Trade {
   break?: string;
 }
 
+interface Order {
+  order_id: string,
+  id: string,
+  symbol: string,
+  exchange: string,
+  avg_execution_price: string,
+  side: 'buy' | 'sell',
+  type: 'exchange limit' | 'exchange stop limit' | 'exchange market',
+  timestamp: string,
+  timestampms: number,
+  is_live: boolean,
+  is_cancelled: boolean,
+  is_hidden: false,
+  was_forced: boolean,
+  executed_amount: string,
+  client_order_id: string,
+  options: [],
+  price: string,
+  original_amount: string,
+  remaining_amount: string,
+  trades: Trade[]
+}
+
 function signRequest (secret: string, payload: string): string {
   return crypto.createHmac('sha384', secret).update(payload).digest('hex')
 }
 
+export async function getOrdersSince (timestamp = 0): Promise<Order[]> {
+  const endpoint = 'https://api.gemini.com/v1/orders/history'
+
+  const payload = Buffer.from(
+    JSON.stringify({
+      nonce: Date.now(),
+      request: '/v1/orders/history',
+      symbol: 'batusd',
+      timestamp,
+      limit_orders: 500
+    })
+  )
+
+  const options = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain',
+      'Content-Length': '0',
+      'X-GEMINI-APIKEY': KEY ?? '',
+      'X-GEMINI-PAYLOAD': payload.toString('base64'),
+      'X-GEMINI-SIGNATURE': signRequest(SECRET ?? '', payload.toString('base64')),
+      'Cache-Control': 'no-cache'
+    }
+  }
+
+  const response = await fetch(endpoint, options)
+
+  if (!response.ok) {
+    debugLOG(`Failed to retrieve orders from Gemini: ${response.statusText}`)
+    return []
+  }
+
+  const orders = (await response.json()) as Order[]
+
+  return orders.filter((order) => {
+    return order.side === 'buy' &&
+      order.trades.length > 0 &&
+      order.is_cancelled === false
+  })
+}
+
 /**
- * The Gemini API does not provide an endpoint to get all past Orders. As a result,
- * we can only query previous trades, and construct a list of Order IDs from there.
- * This is not ideal as it could result in the inclusion of incomplete Orders.
- *
- * TODO: Query the /v1/orders endpoint to get the status of individual Order IDs to
- * see if they are active, or complete. This would enable us to better communicate
- * when an Order is still open, and when it has been completed.
- *
+ * We used to request trades, and then attempt to aggregate the trades into
+ * specific orders. Instead, we now rely on the /v1/orders/history endpoint
+ * via our `getOrdersSince` method. This should yield more accurate results
+ * with less room for error.
  * https://docs.gemini.com/rest-api/#trade-history
  */
-export async function getOrders (
-  timestamp = 0
-): Promise<Record<string, TransactionOrder>> {
-  console.group('Gemini')
+export async function getOrders (since = 0): Promise<Record<string, TransactionOrder>> {
   const results: Record<string, TransactionOrder> = {}
 
-  /**
-   * This timestamp corresponds to early test purchases made on Gemini.
-   * We would like to exclude those from the results since they are small
-   * and insignificant. By adding 1ms, we will retrieve only trades which
-   * occurred after these earlier test transactions.
-   */
-  let afterTimestamp = timestamp || 1649111057653
+  let lastTimestamp = since
 
   while (true) {
-    const afterDate = new Date(afterTimestamp).toLocaleString()
+    const orders = await getOrdersSince(lastTimestamp)
 
-    debugLOG(
-      `Requesting transactions${timestamp > 0 ? ` since ${afterDate}` : ''}`
-    )
-
-    const payload = Buffer.from(
-      JSON.stringify({
-        nonce: Date.now(),
-        request: '/v1/mytrades',
-        symbol: 'batusd',
-        timestamp: afterTimestamp + 1,
-        limit_trades: 500
-      })
-    )
-
-    const options = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain',
-        'Content-Length': '0',
-        'X-GEMINI-APIKEY': KEY ?? '',
-        'X-GEMINI-PAYLOAD': payload.toString('base64'),
-        'X-GEMINI-SIGNATURE': signRequest(
-          SECRET ?? '',
-          payload.toString('base64')
-        ),
-        'Cache-Control': 'no-cache'
-      }
-    }
-
-    const endpoint = 'https://api.gemini.com/v1/mytrades'
-    const response = await fetch(endpoint, options)
-
-    if (!response.ok) {
-      debugLOG(
-        `Failed to retrieve transactions from Gemini${
-          timestamp > 0 ? `since ${afterDate}` : ''
-        }`
-      )
-      debugLOG(await response.text())
+    // If no orders are returned, we've reached the end of the history
+    if (Object.keys(orders).length === 0) {
       break
     }
 
-    const trades = (await response.json()) as Trade[]
-
-    if (trades.length === 0) {
-      debugLOG('No more transactions to retrieve from Gemini')
-      break
-    } else if (trades.length > 0) {
-      const firstDate = new Date(trades[0].timestampms).toLocaleString()
-      const lastDate = new Date(
-        trades[trades.length - 1].timestampms
-      ).toLocaleString()
-      debugLOG(
-        `Retrieved ${trades.length} trades spanning ${lastDate} to ${firstDate}`
-      )
-    }
-
-    /**
-     * Because trades are sorted with the most recent first, we can
-     * add 1ms to the first item's timestamp to ensure we don't get
-     * duplicate trades in the next request.
-     * See: https://docs.gemini.com/rest-api/#get-past-trades
-     */
-    afterTimestamp = trades[0].timestamp
-
-    for (const trade of trades) {
-      if (trade.type !== TradeTypes.Buy) continue
-
-      const id = trade.order_id
-      const time = trade.timestampms
-      const amount = parseFloat(trade.amount)
-
-      /**
-       * A trade for this order has already been encountered.
-       * Let's push the date back for this order if necessary,
-       * and increase the total amount of associated BAT too.
-       */
-      if (Object.keys(results).includes(id)) {
-        const newAmount = parseFloat(results[id].BAT) + amount
-        results[id].date = Math.min(results[id].date, time)
-        results[id].BAT = newAmount.toString()
-        continue
-      }
-
-      /**
-       * This is the first time we've encountered this order.
-       */
-      results[id] = {
-        date: time,
+    // Add the orders to the results
+    for (const order of orders) {
+      results[order.order_id] = {
+        date: order.timestampms,
         site: Exchange.Gemini,
-        BAT: amount.toString()
+        BAT: order.trades.reduce((sum, { amount }) => {
+          return sum + parseFloat(amount)
+        }, 0).toString()
       }
     }
+
+    // Update the last timestamp to the next timestamp
+    lastTimestamp = parseInt(orders[0].timestamp) + 1
   }
 
   console.groupEnd()

@@ -149,9 +149,13 @@ export const handler = async () => {
       const upholdTxns = txns.filter(
         ([, { site }]) => site === Utils.Exchange.Uphold
       )
-      const geminiTxns = txns.filter(
-        ([, { site }]) => site === Utils.Exchange.Gemini
-      )
+
+      // TODO (Sampson): When buggy-data is resolved, re-enable this
+      // const geminiTxns = txns.filter(
+      //   ([, { site }]) => site === Utils.Exchange.Gemini
+      // )
+
+      // TODO (Sampson): Update implementation to use newer Coinbase API
       const cnbaseTxns = txns.filter(
         ([, { site }]) => site === Utils.Exchange.Coinbase
       )
@@ -173,9 +177,11 @@ export const handler = async () => {
 
       // Get most recent timestamp for Gemini
       // TODO: Make sure this timestamp works as intended
-      const geminiTimestamp = Math.max(
-        ...geminiTxns.map(([, { date }]) => date)
-      )
+      // Using 0 for now to overwrite previously-entered buggy data
+      const geminiTimestamp = 0
+      // Math.max(
+      //   ...geminiTxns.map(([, { date }]) => date)
+      // )
       const geminiOrders = await Gemini.getOrders(geminiTimestamp)
       for (const [id, details] of Object.entries(geminiOrders)) {
         source.transactions[id] = details
@@ -196,6 +202,14 @@ export const handler = async () => {
         ...(await Coinbase.getOrders())
       }
     }
+
+    // Sort transactions by date (descending)
+    source.transactions = Object.fromEntries(
+      Object.entries(source.transactions).sort(([, aData], [, bData]) => {
+        return aData.date < bData.date ? 1 : -1
+      })
+    )
+
     const finalTxns = Object.keys(source.transactions)
     if (finalTxns.length > initialTxns.length) {
       console.log(`New transactions: ${finalTxns.length - initialTxns.length}`)
