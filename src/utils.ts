@@ -42,7 +42,7 @@ export interface TransparencyFile {
 
 export const channelLabels = {
   website: 'Websites',
-  twitter: 'X (formerly Twitter)',
+  twitter: 'Twitter',
   youtube: 'YouTube',
   reddit: 'Reddit',
   github: 'GitHub',
