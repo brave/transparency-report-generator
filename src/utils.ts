@@ -17,6 +17,14 @@ export interface TransactionOrder {
 export interface TransparencyFile {
   wallets: number;
   updated: number;
+  lastUpdated: {
+    users?: number;
+    bat?: number;
+    transactions?: number;
+    metrics?: number;
+    braveAds?: number;
+    wallets?: number;
+  };
   users: Record<
     string,
     {

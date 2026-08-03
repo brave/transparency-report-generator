@@ -32,6 +32,17 @@ export const handler = async () => {
   }
 
   /**
+   * Ensure that the 'lastUpdated' property exists. This tracks, per
+   * dataset, the last time it was successfully refreshed -- so that
+   * a dataset whose fetch fails (and is skipped, below) keeps
+   * reporting the timestamp of its last successful update rather
+   * than silently taking on the timestamp of this build run.
+   */
+  if (!source.lastUpdated) {
+    source.lastUpdated = {}
+  }
+
+  /**
    * Update 'users' property
    */
   console.group('Active Users')
@@ -67,6 +78,8 @@ export const handler = async () => {
           return aDate < bDate ? 1 : -1
         })
       )
+
+      source.lastUpdated.users = Date.now()
     })
     .catch((err: Error) => {
       console.log(err)
@@ -107,6 +120,8 @@ export const handler = async () => {
         const stats: number = latestStats[channelType]
         source.metrics.categories[label] = stats
       }
+
+      source.lastUpdated.metrics = Date.now()
     })
     .catch((err: Error) => {
       console.log(err)
@@ -213,6 +228,8 @@ export const handler = async () => {
     } else if (finalTxns.length === initialTxns.length) {
       console.log('No new transactions')
     }
+
+    source.lastUpdated.transactions = Date.now()
   } catch (err: unknown) {
     if (err instanceof Error) {
       console.log('Failed to retrieve transactions')
@@ -230,6 +247,7 @@ export const handler = async () => {
   await Brave.getActiveCampaigns()
     .then((data) => {
       source.braveAds = data
+      source.lastUpdated.braveAds = Date.now()
     })
     .catch((err: Error) => {
       console.log(err)
@@ -261,6 +279,8 @@ export const handler = async () => {
           {} as Record<number, number>
         )
       }
+
+      source.lastUpdated.bat = Date.now()
     })
     .catch((err: Error) => {
       console.log(err)
@@ -286,6 +306,7 @@ export const handler = async () => {
           Utils.debugLOG(`Setting wallets to ${wallets}`)
         }
         source.wallets = wallets
+        source.lastUpdated.wallets = Date.now()
       }
     })
     .catch((err: Error) => {
