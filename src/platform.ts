@@ -4,6 +4,7 @@ import * as BBI from './modules/braveBATInfo.js'
 import * as Uphold from './exchange-modules/uphold.js'
 import * as Gemini from './exchange-modules/gemini.js'
 import * as Coinbase from './exchange-modules/coinbase.js'
+import * as CoinGecko from './exchange-modules/coingecko.js'
 
 // https://docs.aws.amazon.com/lambda/latest/dg/nodejs-handler.html
 export const handler = async () => {
@@ -264,20 +265,27 @@ export const handler = async () => {
    * is not the same as the number of tips/contributions issued
    * by Rewards users to verified content creators.
    */
-  await Promise.all([Brave.getBATInfo(), Brave.getBATHistory()])
+  await Promise.all([Brave.getBATInfo(), CoinGecko.getBATPriceHistory()])
     .then(([I, H]) => {
+
+      // Create history variable hat is combination of source.bat.history and H data
+      const history = {
+        ...source.bat?.history ?? {},
+        ...H.reduce(
+          (acc, [time, price]: CoinGecko.CoinGeckoTokenPrice) => {
+            acc[time] = price
+            return acc
+          },
+          {} as Record<number, number>
+        )
+      }
+
       source.bat = {
         price: I.price.rate,
         holders: I.holdersCount,
         marketcap: I.price.marketCapUsd,
         transactions: I.transfersCount,
-        history: H.Data.Data.reduce(
-          (acc, cur: Brave.CryptoCompareData) => {
-            acc[cur.time] = cur.close
-            return acc
-          },
-          {} as Record<number, number>
-        )
+        history
       }
 
       source.lastUpdated.bat = Date.now()

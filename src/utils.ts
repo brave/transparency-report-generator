@@ -70,6 +70,11 @@ export function roundToNearest (number: number, nearest: number): number {
   return Math.round(number / nearest) * nearest
 }
 
+/** Normalize a Unix timestamp to seconds (some APIs use milliseconds). */
+export function toUnixSeconds (timestamp: number): number {
+  return timestamp >= 1e11 ? Math.floor(timestamp / 1000) : timestamp
+}
+
 export async function getFile (filepath: string) {
   let contents: string
   if (filepath.startsWith('http')) {

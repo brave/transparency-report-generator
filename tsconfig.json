@@ -3,7 +3,6 @@
         "target": "ES2022",
         "module": "ES2022",
         "rootDir": "src",
-        "moduleResolution": "node",
         "outDir": "dist",
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
@@ -12,6 +11,9 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "skipLibCheck": true,
-        "sourceMap": true
+        "sourceMap": true,
+        "types": [
+            "node"
+        ]
     }
 }
