@@ -75,6 +75,12 @@ export function toUnixSeconds (timestamp: number): number {
   return timestamp >= 1e11 ? Math.floor(timestamp / 1000) : timestamp
 }
 
+/** Floor a Unix timestamp to the start of its UTC calendar day (00:00:00). */
+export function toUnixDayStart (timestamp: number): number {
+  const seconds = toUnixSeconds(timestamp)
+  return Math.floor(seconds / 86400) * 86400
+}
+
 export async function getFile (filepath: string) {
   let contents: string
   if (filepath.startsWith('http')) {
