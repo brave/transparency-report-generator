@@ -267,17 +267,17 @@ export const handler = async () => {
    */
   await Promise.all([Brave.getBATInfo(), CoinGecko.getBATPriceHistory()])
     .then(([I, H]) => {
+      // Combine source.bat.history and H data, keyed at 00:00:00
+      const history: Record<number, number> = {}
+      
+      // Add existing history data
+      for (const [time, price] of Object.entries(source.bat?.history ?? {})) {
+        history[Utils.toUnixDayStart(Number(time))] = price
+      }
 
-      // Create history variable hat is combination of source.bat.history and H data
-      const history = {
-        ...source.bat?.history ?? {},
-        ...H.reduce(
-          (acc, [time, price]: CoinGecko.CoinGeckoTokenPrice) => {
-            acc[time] = price
-            return acc
-          },
-          {} as Record<number, number>
-        )
+      // Add CoinGecko history data
+      for (const [time, price] of H) {
+        history[Utils.toUnixDayStart(time)] = price
       }
 
       source.bat = {
